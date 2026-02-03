@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf00483b1b4b84884bedadda5c79b01f, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: 
+  rows: 8
+  columns: 8
+  colorCount: 6
+  minGroupSize: 2
+  thresholdA: 4
+  thresholdB: 7
+  thresholdC: 9
+  blockSize: 1.0
+  blockSpacing: -0.14
+  verticalSpacing: -0.14
+  fallDuration: 0.1
+  colorDefinitions:
+  - {fileID: 11400000, guid: a886e58d9884747258361fa9e3cc5cce, type: 2}
+  - {fileID: 11400000, guid: d299eb147e81e4f00880bfec80782bed, type: 2}
+  - {fileID: 11400000, guid: c074d9d86b7ef45d28ab8eb563077824, type: 2}
+  - {fileID: 11400000, guid: 2624f22698f50406c960805210636ba2, type: 2}
+  - {fileID: 11400000, guid: a3276be29e2674e648add6ca7f2362ef, type: 2}
+  - {fileID: 11400000, guid: cc496415194fa4f6a93f7b2775d2b4fa, type: 2}
