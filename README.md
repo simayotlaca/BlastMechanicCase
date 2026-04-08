@@ -195,6 +195,21 @@ GPU: Constant 9 batches, 8 SetPass calls
 
 ---
 
+## Code Improvements (Self-Review)
+
+After the initial implementation, I reviewed my own code and made the following corrections:
+
+**1. Gravity logic was duplicated across layers.**
+`BoardController.DoGravity()` was re-implementing the same compaction loop already present in `Board.ApplyGravityAll()`, and was also directly calling `board.SetBlock/SetEmpty` to mutate the model — breaking MVC. I added a `GravityMove` struct (mirroring the existing `SpawnInfo` pattern) so the Board records moves during gravity, and the Controller only reads them to drive animation. The Controller no longer touches the grid directly.
+
+**2. `TweenSystem.GetFreeSlot()` was O(n) linear scan.**
+On every new tween creation, the system scanned from index 0 through all 200 slots looking for an inactive one. I replaced this with an O(1) free-slot stack: available indices are pushed on completion and popped on allocation. Worst-case tween creation is now constant time regardless of how many tweens are active.
+
+**3. State machine used a bare integer.**
+`BoardController` tracked game state with `private int step` and `case 1/2/3/4/5`. I replaced this with a `GameState` enum (`Idle`, `ApplyGravityAndSpawn`, `WaitAfterGravity`, `CheckDeadlock`, `ShuffleAnimating`, `FinalizeAfterShuffle`), which makes the intent readable without needing to trace which number means what.
+
+---
+
 ## What I Learned
 
 1. The struct vs class distinction matters. Using structs for frequently created objects prevents GC overhead.
