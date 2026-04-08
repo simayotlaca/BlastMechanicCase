@@ -16,6 +16,13 @@ public struct SpawnInfo
     public int spawnRow;
 }
 
+public struct GravityMove
+{
+    public int fromRow;
+    public int toRow;
+    public int col;
+}
+
 public class Board
 {
     public int rows;
@@ -39,6 +46,9 @@ public class Board
 
     private SpawnInfo[] refillSpawns;
     private int refillSpawnCount;
+
+    private GravityMove[] gravityMoves;
+    private int gravityMoveCount;
 
     private int consecutiveDeadlocks = 0;
 
@@ -82,6 +92,7 @@ public class Board
         shuffleTemp = new int[shuffleTempSize];
 
         refillSpawns = new SpawnInfo[cellCount];
+        gravityMoves = new GravityMove[cellCount];
         dirtyColumns = new bool[this.columns];
         colorCounts = new int[this.colorCount];
 
@@ -774,6 +785,7 @@ public class Board
 
     public void ApplyGravityAll()
     {
+        gravityMoveCount = 0;
         for (int c = 0; c < columns; c++)
             ApplyGravityColumnInternal(c);
     }
@@ -794,6 +806,14 @@ public class Board
                 grid[Idx(writeRow, c)] = color;
                 grid[idx] = -1;
                 moved = true;
+
+                if (gravityMoveCount < gravityMoves.Length)
+                {
+                    gravityMoves[gravityMoveCount].fromRow = r;
+                    gravityMoves[gravityMoveCount].toRow = writeRow;
+                    gravityMoves[gravityMoveCount].col = c;
+                    gravityMoveCount++;
+                }
             }
             writeRow++;
         }
@@ -868,5 +888,8 @@ public class Board
             }
         }
     }
+
+    public int GetGravityMoveCount() => gravityMoveCount;
+    public GravityMove GetGravityMove(int index) => gravityMoves[index];
 
 }

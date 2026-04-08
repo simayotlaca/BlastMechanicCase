@@ -1,6 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum GameState
+{
+    Idle,
+    ApplyGravityAndSpawn,
+    WaitAfterGravity,
+    CheckDeadlock,
+    ShuffleAnimating,
+    FinalizeAfterShuffle
+}
+
 public class BoardController : MonoBehaviour
 {
     public GameConfig config;
@@ -12,7 +22,7 @@ public class BoardController : MonoBehaviour
     private int colorCount;
 
     private bool isBusy = false;
-    private int step = 0;
+    private GameState state = GameState.Idle;
 
     private int totalBlasted = 0;
     private int moveCount = 0;
@@ -88,7 +98,7 @@ public class BoardController : MonoBehaviour
         moveCount = 0;
         shuffleCount = 0;
         isBusy = false;
-        step = 0;
+        state = GameState.Idle;
 
         if (boardView == null) return;
         if (board == null) return;
@@ -117,36 +127,36 @@ public class BoardController : MonoBehaviour
         if (!isBusy)
             return;
 
-        if (step != 4 && boardView.isAnimating)
+        if (state != GameState.ShuffleAnimating && boardView.isAnimating)
             return;
 
-        switch (step)
+        switch (state)
         {
-            case 1:
+            case GameState.ApplyGravityAndSpawn:
                 DoGravity();
                 DoSpawn();
                 waitTimer = 0f;
-                step = 2;
+                state = GameState.WaitAfterGravity;
                 break;
 
-            case 2:
+            case GameState.WaitAfterGravity:
                 waitTimer += Time.deltaTime;
                 if (waitTimer < waitAfterGravity)
                     return;
-                step = 3;
+                state = GameState.CheckDeadlock;
                 break;
 
-            case 3:
+            case GameState.CheckDeadlock:
                 if (needsShuffle)
                 {
                     needsShuffle = false;
-                    step = 4;
+                    state = GameState.ShuffleAnimating;
                     boardView.PlayShuffleAnimation(() =>
                     {
                         board.ShuffleBoard();
                         boardView.RefreshAllBlocks();
                         board.RecomputeGroupsAndCheckMove();
-                        step = 5;
+                        state = GameState.FinalizeAfterShuffle;
                     });
                     return;
                 }
@@ -154,18 +164,18 @@ public class BoardController : MonoBehaviour
                 EnsureValidMoveExists();
                 boardView.UpdateAllIcons();
                 isBusy = false;
-                step = 0;
+                state = GameState.Idle;
                 ResetIdleTimer();
                 break;
 
-            case 4:
+            case GameState.ShuffleAnimating:
                 break;
 
-            case 5:
+            case GameState.FinalizeAfterShuffle:
                 EnsureValidMoveExists();
                 boardView.UpdateAllIcons();
                 isBusy = false;
-                step = 0;
+                state = GameState.Idle;
                 ResetIdleTimer();
                 break;
         }
@@ -191,7 +201,7 @@ public class BoardController : MonoBehaviour
         moveCount++;
 
         isBusy = true;
-        step = 1;
+        state = GameState.ApplyGravityAndSpawn;
     }
 
     void HandleMouseClick()
@@ -211,25 +221,12 @@ public class BoardController : MonoBehaviour
 
     void DoGravity()
     {
-        for (int col = 0; col < board.columns; col++)
+        board.ApplyGravityAll();
+        int count = board.GetGravityMoveCount();
+        for (int i = 0; i < count; i++)
         {
-            int writeRow = 0;
-
-            for (int readRow = 0; readRow < board.rows; readRow++)
-            {
-                if (!board.IsEmpty(readRow, col))
-                {
-                    if (readRow != writeRow)
-                    {
-                        int color = board.GetColor(readRow, col);
-                        board.SetBlock(writeRow, col, color);
-                        board.SetEmpty(readRow, col);
-
-                        boardView.MoveBlock(readRow, col, writeRow, col);
-                    }
-                    writeRow++;
-                }
-            }
+            GravityMove move = board.GetGravityMove(i);
+            boardView.MoveBlock(move.fromRow, move.col, move.toRow, move.col);
         }
     }
 

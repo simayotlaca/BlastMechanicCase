@@ -56,6 +56,9 @@ public class TweenSystem : MonoBehaviour
     private bool[] callbackActive;
     private int nextCallbackId = 0;
 
+    private int[] freeSlotStack;
+    private int freeSlotTop;
+
     private Vector3 tempVector;
 
     void Awake()
@@ -75,6 +78,11 @@ public class TweenSystem : MonoBehaviour
         {
             tweens[i] = new TweenData { active = false };
         }
+
+        freeSlotStack = new int[MAX_TWEENS];
+        freeSlotTop = 0;
+        for (int i = MAX_TWEENS - 1; i >= 0; i--)
+            freeSlotStack[freeSlotTop++] = i;
     }
 
     void Update()
@@ -158,6 +166,8 @@ public class TweenSystem : MonoBehaviour
             }
         }
 
+        if (freeSlotTop < MAX_TWEENS)
+            freeSlotStack[freeSlotTop++] = index;
         t.active = false;
         t.target = null;
         activeTweenCount--;
@@ -272,7 +282,7 @@ public class TweenSystem : MonoBehaviour
         {
             if (tweens[i].active && tweens[i].target == target)
             {
-                ClearTween(ref tweens[i]);
+                ClearTween(ref tweens[i], i);
                 activeTweenCount--;
             }
         }
@@ -283,7 +293,7 @@ public class TweenSystem : MonoBehaviour
         if (id < 0 || id >= MAX_TWEENS) return;
         if (!tweens[id].active) return;
 
-        ClearTween(ref tweens[id]);
+        ClearTween(ref tweens[id], id);
         activeTweenCount--;
     }
 
@@ -291,14 +301,9 @@ public class TweenSystem : MonoBehaviour
 
     private int GetFreeSlot()
     {
-        for (int i = 0; i < MAX_TWEENS; i++)
-        {
-            if (!tweens[i].active)
-                return i;
-        }
-
-
-        return -1;
+        if (freeSlotTop <= 0)
+            return -1;
+        return freeSlotStack[--freeSlotTop];
     }
 
     private void SetupCallback(ref TweenData t, Action callback)
@@ -329,13 +334,15 @@ public class TweenSystem : MonoBehaviour
 
     }
 
-    private void ClearTween(ref TweenData t)
+    private void ClearTween(ref TweenData t, int index)
     {
         if (t.hasCallback && t.callbackId >= 0 && t.callbackId < MAX_CALLBACKS)
         {
             callbackActive[t.callbackId] = false;
             callbackPool[t.callbackId] = null;
         }
+        if (freeSlotTop < MAX_TWEENS)
+            freeSlotStack[freeSlotTop++] = index;
         t.active = false;
         t.target = null;
         t.hasCallback = false;
