@@ -28,6 +28,10 @@ public class BoardController : MonoBehaviour
     private int moveCount = 0;
     private int shuffleCount = 0;
 
+    public int TotalBlasted  => totalBlasted;
+    public int MoveCount     => moveCount;
+    public int ShuffleCount  => shuffleCount;
+
     private float waitTimer = 0f;
     private bool needsShuffle = false;
 
